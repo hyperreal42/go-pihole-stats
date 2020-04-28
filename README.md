@@ -1,5 +1,7 @@
 # go-pihole-stats
 
+WIP
+
 Get stats from your Pihole instance at the command-line
 
 ```bash
