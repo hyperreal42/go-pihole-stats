@@ -23,6 +23,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"reflect"
 
 	"github.com/fatih/color"
 )
@@ -47,12 +48,12 @@ var (
 
 // Colors ---
 var (
-	Blue      = color.New(color.FgBlue).SprintFunc()
-	Green     = color.New(color.FgGreen).SprintFunc()
-	Red       = color.New(color.FgRed).SprintFunc()
-	Magenta   = color.New(color.FgMagenta).SprintFunc()
-	Bold      = color.New(color.Bold).SprintFunc()
-	Underline = color.New(color.Underline).SprintFunc()
+	blue      = color.New(color.FgBlue).SprintFunc()
+	green     = color.New(color.FgGreen).SprintFunc()
+	red       = color.New(color.FgRed).SprintFunc()
+	magenta   = color.New(color.FgMagenta).SprintFunc()
+	bold      = color.New(color.Bold).SprintFunc()
+	underline = color.New(color.Underline).SprintFunc()
 )
 
 /*
@@ -178,8 +179,34 @@ func toggleStatus(url string) {
 	fmt.Printf("Pi-hole status: %s\n", status.Status)
 }
 
-func main() {
+func enumerateContent(data interface{}) []interface{} {
+	v := reflect.ValueOf(data)
+	values := make([]interface{}, v.NumField())
+	for i := 0; i < v.NumField(); i++ {
+		values[i] = v.Field(i).Interface()
+	}
+	return values
+}
+
+func getContent() {
 	content := doRequest(urlSummary, authorization)
+	data, err := getSummary(content)
+	errCheck(err)
+
+	statusReq := doRequest(urlStatus, authorization)
+	status, err := getStatus(statusReq)
+	errCheck(err)
+
+	fmt.Printf("%s\n", red("Pi-hole Statistics"))
+	fmt.Printf("Pi-hole admin console: %s\n", baseURL)
+	fmt.Printf("Status: %s\n", green(status.Status))
+	fmt.Printf("%s\n", magenta("---"))
+
+	fmt.Println(enumerateContent(*data))
+}
+
+func main() {
+	/* content := doRequest(urlSummary, authorization)
 	data, err := getSummary(content)
 	errCheck(err)
 	fmt.Println(data.UniqueClients)
@@ -188,7 +215,16 @@ func main() {
 	statusReq := doRequest(urlStatus, authorization)
 	status, err := getStatus(statusReq)
 	errCheck(err)
-	fmt.Println(status.Status)
-	toggleStatus(urlDisable)
-	toggleStatus(urlEnable)
+	fmt.Println(status.Status) */
+
+	/* 	args := os.Args
+	   	if len(args) > 2 || args[1] == "help" {
+	   		printUsage()
+	   	} else if args[1] == "enable" || args[1] == "disable" {
+	   		toggleStatus(args[1])
+	   	} else {
+	   		getContent()
+	   	} */
+	getContent()
+
 }
