@@ -23,7 +23,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"reflect"
 
 	"github.com/fatih/color"
 )
@@ -32,7 +31,6 @@ import (
 Pi-hole stats for cli by Jeffrey Serio @hyperreal42 on Github/GitLab
 WIP
 TODO:
-* Printf values with colored output in main()
 * Implement command-line argument handling
 */
 
@@ -179,15 +177,6 @@ func toggleStatus(url string) {
 	fmt.Printf("Pi-hole status: %s\n", status.Status)
 }
 
-func enumerateContent(data interface{}) []interface{} {
-	v := reflect.ValueOf(data)
-	values := make([]interface{}, v.NumField())
-	for i := 0; i < v.NumField(); i++ {
-		values[i] = v.Field(i).Interface()
-	}
-	return values
-}
-
 func getContent() {
 	content := doRequest(urlSummary, authorization)
 	data, err := getSummary(content)
@@ -197,26 +186,33 @@ func getContent() {
 	status, err := getStatus(statusReq)
 	errCheck(err)
 
-	fmt.Printf("%s\n", red("Pi-hole Statistics"))
+	g := *data.GravityLastUpdated.GravRelUp
+
+	fmt.Printf("%s\n\n", bold(underline(red("Pi-hole Statistics"))))
 	fmt.Printf("Pi-hole admin console: %s\n", baseURL)
 	fmt.Printf("Status: %s\n", green(status.Status))
-	fmt.Printf("%s\n", magenta("---"))
+	fmt.Printf("Gravity last updated: %s days, %s hours, %s minutes\n", g.Days, g.Hours, g.Minutes)
+	fmt.Printf("%s\n\n", magenta("---"))
 
-	fmt.Println(enumerateContent(*data))
+	dataMap := map[string]string{
+		"Current unique clients":  data.UniqueClients,
+		"Total clients ever seen": data.ClientsEverSeen,
+		"Domains being blocked":   data.DomainsBeingBlocked,
+		"Ads blocked today":       data.AdsBlockedToday,
+		"Ads percentage today":    data.AdsPercentageToday,
+		"DNS queries today":       data.DNSQueriesToday,
+		"Queries cached today":    data.QueriesCachedToday,
+		"Queries forwarded today": data.QueriesForwardedToday,
+		"Unique domains today":    data.UniqueDomainsToday,
+	}
+
+	for i, j := range dataMap {
+		fmt.Printf("%s: %s\n", i, j)
+	}
+	fmt.Printf("%s\n\n", magenta("---"))
 }
 
 func main() {
-	/* content := doRequest(urlSummary, authorization)
-	data, err := getSummary(content)
-	errCheck(err)
-	fmt.Println(data.UniqueClients)
-	fmt.Println(data.GravityLastUpdated.GravFileExists)
-	fmt.Println(*data.GravityLastUpdated.GravRelUp)
-	statusReq := doRequest(urlStatus, authorization)
-	status, err := getStatus(statusReq)
-	errCheck(err)
-	fmt.Println(status.Status) */
-
 	/* 	args := os.Args
 	   	if len(args) > 2 || args[1] == "help" {
 	   		printUsage()
