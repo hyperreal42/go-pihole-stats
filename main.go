@@ -49,7 +49,6 @@ var (
 	blue      = color.New(color.FgBlue).SprintFunc()
 	green     = color.New(color.FgGreen).SprintFunc()
 	red       = color.New(color.FgRed).SprintFunc()
-	magenta   = color.New(color.FgMagenta).SprintFunc()
 	bold      = color.New(color.Bold).SprintFunc()
 	underline = color.New(color.Underline).SprintFunc()
 )
@@ -60,29 +59,25 @@ Data structures ---
 
 // PiholeStats ---
 type PiholeStats struct {
-	UniqueClients         string      `json:"unique_clients"`
-	ClientsEverSeen       string      `json:"clients_ever_seen"`
-	GravityLastUpdated    *gravLastUp `json:"gravity_last_updated"`
-	DomainsBeingBlocked   string      `json:"domains_being_blocked"`
-	AdsBlockedToday       string      `json:"ads_blocked_today"`
-	AdsPercentageToday    string      `json:"ads_percentage_today"`
-	DNSQueriesToday       string      `json:"dns_queries_today"`
-	QueriesCachedToday    string      `json:"queries_cached"`
-	QueriesForwardedToday string      `json:"queries_forwarded"`
-	UniqueDomainsToday    string      `json:"unique_domains"`
-}
+	UniqueClients         string `json:"unique_clients"`
+	ClientsEverSeen       string `json:"clients_ever_seen"`
+	DomainsBeingBlocked   string `json:"domains_being_blocked"`
+	AdsBlockedToday       string `json:"ads_blocked_today"`
+	AdsPercentageToday    string `json:"ads_percentage_today"`
+	DNSQueriesToday       string `json:"dns_queries_today"`
+	QueriesCachedToday    string `json:"queries_cached"`
+	QueriesForwardedToday string `json:"queries_forwarded"`
+	UniqueDomainsToday    string `json:"unique_domains"`
 
-// gravLastUp --- Get gravity last updated timestamp info
-type gravLastUp struct {
-	GravFileExists bool      `json:"file_exists"`
-	GravRelUp      *relUnits `json:"relative"`
-}
+	GravityLastUpdated struct {
+		GravFileExists bool `json:"file_exists"`
 
-// relUnits --- Time units since t_0 relative to common human standards
-type relUnits struct {
-	Days    string `json:"days"`
-	Hours   string `json:"hours"`
-	Minutes string `json:"minutes"`
+		GravRelUp struct {
+			Days    string `json:"days"`
+			Hours   string `json:"hours"`
+			Minutes string `json:"minutes"`
+		}
+	}
 }
 
 // piholeStatus --- Enabled or disabled
@@ -117,35 +112,10 @@ func doRequest(u string, a string) []byte {
 	return body
 }
 
-// getRelUnits --- Returns *relUnits instance
-func getRelUnits(jsonKey []byte) (*relUnits, error) {
-	relUnits := &relUnits{}
-	if err := json.Unmarshal(jsonKey, relUnits); err != nil {
-		return nil, err
-	}
-	return relUnits, nil
-}
-
-// getGravUptime --- Returns *gravLastUp instance
-func getGravUptime(jsonKey []byte) (*gravLastUp, error) {
-	ru, err := getRelUnits(jsonKey)
-	errCheck(err)
-	gravLastUp := &gravLastUp{
-		GravRelUp: ru,
-	}
-	if err := json.Unmarshal(jsonKey, gravLastUp); err != nil {
-		return nil, err
-	}
-	return gravLastUp, nil
-}
-
 // getSummary --- returns *PiholeStats instance
 func getSummary(jsonKey []byte) (*PiholeStats, error) {
-	gravUp, err := getGravUptime(jsonKey)
-	errCheck(err)
-	data := &PiholeStats{
-		GravityLastUpdated: gravUp,
-	}
+
+	data := &PiholeStats{}
 	if err := json.Unmarshal(jsonKey, data); err != nil {
 		return nil, err
 	}
@@ -162,17 +132,19 @@ func getStatus(jsonKey []byte) (*piholeStatus, error) {
 }
 
 // toggleStatus --- enable/disable Pi-hole
-func toggleStatus(url string) {
+func toggleStatus(cmd string) {
 	statusReq := doRequest(urlStatus, authorization)
 	status, err := getStatus(statusReq)
 	errCheck(err)
 	var req []byte
 
-	if status.Status == "enabled" && url == urlDisable {
-		req = doRequest(urlDisable, authorization)
-	} else if status.Status == "disabled" && url == urlEnable {
+	switch cmd {
+	case "enable":
 		req = doRequest(urlEnable, authorization)
+	case "disable":
+		req = doRequest(urlDisable, authorization)
 	}
+
 	status, err = getStatus(req)
 	fmt.Printf("Pi-hole status: %s\n", status.Status)
 }
@@ -186,13 +158,17 @@ func getContent() {
 	status, err := getStatus(statusReq)
 	errCheck(err)
 
-	g := *data.GravityLastUpdated.GravRelUp
+	g := data.GravityLastUpdated.GravRelUp
 
 	fmt.Printf("%s\n\n", bold(underline(red("Pi-hole Statistics"))))
 	fmt.Printf("Pi-hole admin console: %s\n", baseURL)
-	fmt.Printf("Status: %s\n", green(status.Status))
+	if status.Status == "enabled" {
+		fmt.Printf("Status: %s\n", green("Enabled"))
+	} else {
+		fmt.Printf("Status: %s\n", red("Disabled"))
+	}
 	fmt.Printf("Gravity last updated: %s days, %s hours, %s minutes\n", g.Days, g.Hours, g.Minutes)
-	fmt.Printf("%s\n\n", magenta("---"))
+	fmt.Printf("%s\n\n", blue("---"))
 
 	dataMap := map[string]string{
 		"Current unique clients":  data.UniqueClients,
@@ -209,18 +185,26 @@ func getContent() {
 	for i, j := range dataMap {
 		fmt.Printf("%s: %s\n", i, j)
 	}
-	fmt.Printf("%s\n\n", magenta("---"))
+	fmt.Printf("%s\n\n", blue("---"))
+}
+
+func printUsage() {
+	fmt.Printf("USAGE :\n%s enable|disable\n", os.Args[0])
+	fmt.Printf("%s summary\n", os.Args[0])
 }
 
 func main() {
-	/* 	args := os.Args
-	   	if len(args) > 2 || args[1] == "help" {
-	   		printUsage()
-	   	} else if args[1] == "enable" || args[1] == "disable" {
-	   		toggleStatus(args[1])
-	   	} else {
-	   		getContent()
-	   	} */
-	getContent()
-
+	args := os.Args
+	if len(args) != 2 {
+		printUsage()
+	} else {
+		switch args[1] {
+		case "enable", "disable":
+			toggleStatus(args[1])
+		case "summary":
+			getContent()
+		default:
+			printUsage()
+		}
+	}
 }
