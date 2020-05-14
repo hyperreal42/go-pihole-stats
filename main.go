@@ -23,6 +23,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/fatih/color"
 )
@@ -76,11 +77,11 @@ type PiholeStats struct {
 			Days    string `json:"days"`
 			Hours   string `json:"hours"`
 			Minutes string `json:"minutes"`
-		}
-	}
+		} `json:"relative"`
+	} `json:"gravity_last_updated"`
 }
 
-// piholeStatus --- Enabled or disabled
+// piholeStatus -- Enabled or disabled
 type piholeStatus struct {
 	Status string `json:"status"`
 }
@@ -158,8 +159,6 @@ func getContent() {
 	status, err := getStatus(statusReq)
 	errCheck(err)
 
-	g := data.GravityLastUpdated.GravRelUp
-
 	fmt.Printf("%s\n\n", bold(underline(red("Pi-hole Statistics"))))
 	fmt.Printf("Pi-hole admin console: %s\n", baseURL)
 	if status.Status == "enabled" {
@@ -167,7 +166,16 @@ func getContent() {
 	} else {
 		fmt.Printf("Status: %s\n", red("Disabled"))
 	}
-	fmt.Printf("Gravity last updated: %s days, %s hours, %s minutes\n", g.Days, g.Hours, g.Minutes)
+
+	g := data.GravityLastUpdated
+	if g.GravFileExists == true {
+		gDays, _ := strconv.Atoi(g.GravRelUp.Days)
+		gHours, _ := strconv.Atoi(g.GravRelUp.Hours)
+		gMins, _ := strconv.Atoi(g.GravRelUp.Minutes)
+		fmt.Printf("Gravity last updated: %d days, %d hours, %d minutes\n", gDays, gHours, gMins)
+	} else {
+		fmt.Println("Gravity has not been updated yet")
+	}
 	fmt.Printf("%s\n\n", blue("---"))
 
 	dataMap := map[string]string{
