@@ -32,7 +32,6 @@ import (
 Pi-hole stats for cli by Jeffrey Serio @hyperreal42 on Github/GitLab
 WIP
 TODO:
-* Implement command-line argument handling
 */
 
 // Basic variables for Pihole instance ---
@@ -132,22 +131,12 @@ func getStatus(jsonKey []byte) (*piholeStatus, error) {
 	return status, nil
 }
 
-// toggleStatus --- enable/disable Pi-hole
-func toggleStatus(cmd string) {
-	statusReq := doRequest(urlStatus, authorization)
-	status, err := getStatus(statusReq)
-	errCheck(err)
-	var req []byte
+func enablePihole() {
+	_ = doRequest(urlEnable, authorization)
+}
 
-	switch cmd {
-	case "enable":
-		req = doRequest(urlEnable, authorization)
-	case "disable":
-		req = doRequest(urlDisable, authorization)
-	}
-
-	status, err = getStatus(req)
-	fmt.Printf("Pi-hole status: %s\n", status.Status)
+func disablePihole() {
+	_ = doRequest(urlDisable, authorization)
 }
 
 func getContent() {
@@ -176,7 +165,7 @@ func getContent() {
 	} else {
 		fmt.Println("Gravity has not been updated yet")
 	}
-	fmt.Printf("%s\n\n", blue("---"))
+	fmt.Printf("%s\n", blue("---"))
 
 	dataMap := map[string]string{
 		"Current unique clients":  data.UniqueClients,
@@ -193,24 +182,26 @@ func getContent() {
 	for i, j := range dataMap {
 		fmt.Printf("%s: %s\n", i, j)
 	}
-	fmt.Printf("%s\n\n", blue("---"))
+	fmt.Printf("%s\n", blue("---"))
 }
 
 func printUsage() {
-	fmt.Printf("USAGE :\n%s enable|disable\n", os.Args[0])
-	fmt.Printf("%s summary\n", os.Args[0])
+	fmt.Printf("USAGE:\n%s {e|d}\t", os.Args[0])
+	fmt.Println("Enable or disable Pi-hole")
+	fmt.Printf("%s\t", os.Args[0])
+	fmt.Println("Get Pi-hole stats")
+	os.Exit(1)
 }
 
 func main() {
-	args := os.Args
-	if len(args) != 2 {
-		printUsage()
+	if len(os.Args) < 2 {
+		getContent()
 	} else {
-		switch args[1] {
-		case "enable", "disable":
-			toggleStatus(args[1])
-		case "summary":
-			getContent()
+		switch os.Args[1] {
+		case "e":
+			enablePihole()
+		case "d":
+			disablePihole()
 		default:
 			printUsage()
 		}
