@@ -32,7 +32,8 @@ import (
 Pi-hole stats for cli by Jeffrey Serio @hyperreal42 on Github/GitLab
 WIP
 TODO:
-	- Handle case in baseURL == "" and authorization == ""
+- Handle case in baseURL == "" and authorization == ""
+- Handle errors properly
 */
 
 // Basic variables for Pihole instance ---
