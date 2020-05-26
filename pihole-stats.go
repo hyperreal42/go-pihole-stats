@@ -61,6 +61,7 @@ Data structures ---
 
 // PiholeStats ---
 type PiholeStats struct {
+	Status                string `json:"status"`
 	UniqueClients         string `json:"unique_clients"`
 	ClientsEverSeen       string `json:"clients_ever_seen"`
 	DomainsBeingBlocked   string `json:"domains_being_blocked"`
@@ -80,11 +81,6 @@ type PiholeStats struct {
 			Minutes string `json:"minutes"`
 		} `json:"relative"`
 	} `json:"gravity_last_updated"`
-}
-
-// piholeStatus -- Enabled or disabled
-type piholeStatus struct {
-	Status string `json:"status"`
 }
 
 /*
@@ -124,15 +120,6 @@ func getSummary(jsonKey []byte) (*PiholeStats, error) {
 	return data, nil
 }
 
-// getStatus --- returns *piholeStatus instance
-func getStatus(jsonKey []byte) (*piholeStatus, error) {
-	status := &piholeStatus{}
-	if err := json.Unmarshal(jsonKey, status); err != nil {
-		return nil, err
-	}
-	return status, nil
-}
-
 func enablePihole() {
 	_ = doRequest(urlEnable, authorization)
 }
@@ -146,13 +133,9 @@ func getContent() {
 	data, err := getSummary(content)
 	errCheck(err)
 
-	statusReq := doRequest(urlStatus, authorization)
-	status, err := getStatus(statusReq)
-	errCheck(err)
-
 	fmt.Printf("%s\n\n", bold(underline(red("Pi-hole Statistics"))))
 	fmt.Printf("Pi-hole admin console: %s\n", baseURL)
-	if status.Status == "enabled" {
+	if data.Status == "enabled" {
 		fmt.Printf("Status: %s\n", green("Enabled"))
 	} else {
 		fmt.Printf("Status: %s\n", red("Disabled"))
