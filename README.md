@@ -9,8 +9,8 @@ To use, one must have a running Pi-hole instance on one's network. Export the fo
 Note: the auth token is stored in the `WEBPASSWORD` variable in `/etc/pihole/setupVars.conf` on the Pi-hole machine.
 
 ```bash
-export PIHOLE_STATS_URL="http://pi.hole/admin"
-export PIHOLE_STATS_AUTH="auth token"
+export PIHOLE_URL="http://pi.hole/admin"
+export PIHOLE_AUTH="auth token"
 ```
 
 Build and/or run the program:

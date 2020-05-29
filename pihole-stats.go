@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -33,17 +32,16 @@ Pi-hole stats for cli by Jeffrey Serio @hyperreal42 on Github/GitLab
 WIP
 TODO:
 - Handle case in baseURL == "" and authorization == ""
-- Handle errors properly
 */
 
 // Basic variables for Pihole instance ---
 var (
-	baseURL       = os.Getenv("PIHOLE_STATS_URL")
+	baseURL       = os.Getenv("PIHOLE_URL")
 	urlSummary    = baseURL + "/api.php?summary"
 	urlStatus     = baseURL + "/api.php?status"
 	urlEnable     = baseURL + "/api.php?enable"
 	urlDisable    = baseURL + "/api.php?disable"
-	authorization = "&auth=" + os.Getenv("PIHOLE_STATS_AUTH")
+	authorization = "&auth=" + os.Getenv("PIHOLE_AUTH")
 )
 
 // Colors ---
@@ -90,7 +88,8 @@ type PiholeStats struct {
 // errCheck --- check if err != nil
 func errCheck(err error) {
 	if err != nil {
-		log.Fatal(err)
+		fmt.Printf("Error: %v\n", err)
+		return
 	}
 }
 
