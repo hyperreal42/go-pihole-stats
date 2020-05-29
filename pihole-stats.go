@@ -20,11 +20,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
 
 	"github.com/fatih/color"
+	"github.com/pkg/errors"
 )
 
 /*
@@ -85,28 +87,26 @@ type PiholeStats struct {
  Helper functions ---
 */
 
-// errCheck --- check if err != nil
-func errCheck(err error) {
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		return
-	}
-}
-
 // doRequest --- HTTP GET request to the API
 // Returns byte array to be plugged into other functions
-func doRequest(u string, a string) []byte {
-	newURL := u + a
+func doRequest(url string, auth string) ([]byte, error) {
+	newURL := url + auth
 	req, err := http.NewRequest("GET", newURL, nil)
-	errCheck(err)
+	if err != nil {
+		return nil, errors.Wrap(err, "GET request failed")
+	}
 
 	res, err := http.DefaultClient.Do(req)
-	errCheck(err)
+	if err != nil {
+		return nil, errors.Wrap(err, "Could not get HTTP response")
+	}
 
 	defer res.Body.Close()
 	body, err := ioutil.ReadAll(res.Body)
-	errCheck(err)
-	return body
+	if err != nil {
+		return nil, errors.Wrap(err, "Failed to read HTTP response body")
+	}
+	return body, nil
 }
 
 // getSummary --- returns *PiholeStats instance
@@ -119,18 +119,31 @@ func getSummary(jsonKey []byte) (*PiholeStats, error) {
 	return data, nil
 }
 
-func enablePihole() {
-	_ = doRequest(urlEnable, authorization)
+func enablePihole() error {
+	_, err := doRequest(urlEnable, authorization)
+	if err != nil {
+		return errors.Wrap(err, "")
+	}
+	return nil
 }
 
-func disablePihole() {
-	_ = doRequest(urlDisable, authorization)
+func disablePihole() error {
+	_, err := doRequest(urlDisable, authorization)
+	if err != nil {
+		return errors.Wrap(err, "")
+	}
+	return nil
 }
 
-func getContent() {
-	content := doRequest(urlSummary, authorization)
+func getContent() error {
+	content, err := doRequest(urlSummary, authorization)
+	if err != nil {
+		return errors.Wrap(err, "Failed to run HTTP request for Pi-hole stats")
+	}
 	data, err := getSummary(content)
-	errCheck(err)
+	if err != nil {
+		return errors.Wrap(err, "Failed to get Pi-hole stats summary")
+	}
 
 	fmt.Printf("%s\n\n", bold(underline(red("Pi-hole Statistics"))))
 	fmt.Printf("Pi-hole admin console: %s\n", baseURL)
@@ -167,6 +180,8 @@ func getContent() {
 		fmt.Printf("%s: %s\n", i, j)
 	}
 	fmt.Printf("%s\n", blue("---"))
+
+	return nil
 }
 
 func printUsage() {
@@ -179,13 +194,19 @@ func printUsage() {
 
 func main() {
 	if len(os.Args) < 2 {
-		getContent()
+		if err := getContent(); err != nil {
+			log.Fatal(err)
+		}
 	} else {
 		switch os.Args[1] {
 		case "e":
-			enablePihole()
+			if err := enablePihole(); err != nil {
+				log.Fatal(err)
+			}
 		case "d":
-			disablePihole()
+			if err := disablePihole(); err != nil {
+				log.Fatal(err)
+			}
 		default:
 			printUsage()
 		}
