@@ -122,7 +122,7 @@ func getSummary(jsonKey []byte) (*PiholeStats, error) {
 func enablePihole() error {
 	_, err := doRequest(urlEnable, authorization)
 	if err != nil {
-		return errors.Wrap(err, "")
+		return errors.Wrap(err, "Failed to enable Pi-hole")
 	}
 	return nil
 }
@@ -130,7 +130,7 @@ func enablePihole() error {
 func disablePihole() error {
 	_, err := doRequest(urlDisable, authorization)
 	if err != nil {
-		return errors.Wrap(err, "")
+		return errors.Wrap(err, "Failed to disable Pi-hole")
 	}
 	return nil
 }
