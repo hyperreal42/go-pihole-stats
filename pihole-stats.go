@@ -23,7 +23,8 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
+
+	//"strconv"
 
 	"github.com/fatih/color"
 	"github.com/pkg/errors"
@@ -76,9 +77,9 @@ type PiholeStats struct {
 		GravFileExists bool `json:"file_exists"`
 
 		GravRelUp struct {
-			Days    string `json:"days"`
-			Hours   string `json:"hours"`
-			Minutes string `json:"minutes"`
+			Days    int `json:"days"`
+			Hours   int `json:"hours"`
+			Minutes int `json:"minutes"`
 		} `json:"relative"`
 	} `json:"gravity_last_updated"`
 }
@@ -155,10 +156,10 @@ func getContent() error {
 
 	g := data.GravityLastUpdated
 	if g.GravFileExists == true {
-		gDays, _ := strconv.Atoi(g.GravRelUp.Days)
-		gHours, _ := strconv.Atoi(g.GravRelUp.Hours)
-		gMins, _ := strconv.Atoi(g.GravRelUp.Minutes)
-		fmt.Printf("Gravity last updated: %d days, %d hours, %d minutes\n", gDays, gHours, gMins)
+		// gDays, _ := strconv.Atoi(g.GravRelUp.Days)
+		// gHours, _ := strconv.Atoi(g.GravRelUp.Hours)
+		// gMins, _ := strconv.Atoi(g.GravRelUp.Minutes)
+		fmt.Printf("Gravity last updated: %d days, %d hours, %d minutes\n", g.GravRelUp.Days, g.GravRelUp.Hours, g.GravRelUp.Minutes)
 	} else {
 		fmt.Println("Gravity has not been updated yet")
 	}
