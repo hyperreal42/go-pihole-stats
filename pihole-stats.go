@@ -56,6 +56,16 @@ var (
 	underline = color.New(color.Underline).SprintFunc()
 )
 
+const usage = `
+Pi-hole stats
+-------------
+This program prints Pi-hole stats to standard output
+
+Usage:
+pihole-stats            : Print stats from Pi-hole instance
+
+pihole-stats [e | d]    : Enable (e) or disable (d) Pi-hole`
+
 /*
 Data structures ---
 */
@@ -97,6 +107,10 @@ func doRequest(url string, auth string) ([]byte, error) {
 		return nil, errors.Wrap(err, "GET request failed")
 	}
 
+	if newURL == "/api.php?summary&auth=" {
+		err := errors.New("Pi-hole url or auth token not supplied")
+		return nil, err
+	}
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not get HTTP response")
@@ -121,22 +135,24 @@ func getSummary(jsonKey []byte) (*PiholeStats, error) {
 }
 
 func enablePihole() error {
-	_, err := doRequest(urlEnable, authorization)
+	res, err := doRequest(urlEnable, authorization)
 	if err != nil {
 		return errors.Wrap(err, "Failed to enable Pi-hole")
 	}
+	fmt.Println(string(res))
 	return nil
 }
 
 func disablePihole() error {
-	_, err := doRequest(urlDisable, authorization)
+	res, err := doRequest(urlDisable, authorization)
 	if err != nil {
 		return errors.Wrap(err, "Failed to disable Pi-hole")
 	}
+	fmt.Println(string(res))
 	return nil
 }
 
-func getContent() error {
+func printContent() error {
 	content, err := doRequest(urlSummary, authorization)
 	if err != nil {
 		return errors.Wrap(err, "Failed to run HTTP request for Pi-hole stats")
@@ -156,9 +172,6 @@ func getContent() error {
 
 	g := data.GravityLastUpdated
 	if g.GravFileExists == true {
-		// gDays, _ := strconv.Atoi(g.GravRelUp.Days)
-		// gHours, _ := strconv.Atoi(g.GravRelUp.Hours)
-		// gMins, _ := strconv.Atoi(g.GravRelUp.Minutes)
 		fmt.Printf("Gravity last updated: %d days, %d hours, %d minutes\n", g.GravRelUp.Days, g.GravRelUp.Hours, g.GravRelUp.Minutes)
 	} else {
 		fmt.Println("Gravity has not been updated yet")
@@ -185,17 +198,9 @@ func getContent() error {
 	return nil
 }
 
-func printUsage() {
-	fmt.Printf("USAGE:\n%s {e|d}\t", os.Args[0])
-	fmt.Println("Enable or disable Pi-hole")
-	fmt.Printf("%s\t", os.Args[0])
-	fmt.Println("Get Pi-hole stats")
-	os.Exit(1)
-}
-
 func main() {
 	if len(os.Args) < 2 {
-		if err := getContent(); err != nil {
+		if err := printContent(); err != nil {
 			log.Fatal(err)
 		}
 	} else {
@@ -209,7 +214,7 @@ func main() {
 				log.Fatal(err)
 			}
 		default:
-			printUsage()
+			fmt.Println(usage)
 		}
 	}
 }
