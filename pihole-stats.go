@@ -24,8 +24,6 @@ import (
 	"net/http"
 	"os"
 
-	//"strconv"
-
 	"github.com/fatih/color"
 	"github.com/pkg/errors"
 )
@@ -34,7 +32,6 @@ import (
 Pi-hole stats for cli by Jeffrey Serio @hyperreal42 on Github/GitLab
 WIP
 TODO:
-- Handle case in baseURL == "" and authorization == ""
 */
 
 // Basic variables for Pihole instance ---
