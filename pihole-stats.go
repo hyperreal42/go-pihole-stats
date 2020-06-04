@@ -198,17 +198,17 @@ func printContent() error {
 func main() {
 	if len(os.Args) < 2 {
 		if err := printContent(); err != nil {
-			log.Fatal(err)
+			log.Fatalln(err)
 		}
 	} else {
 		switch os.Args[1] {
 		case "e":
 			if err := enablePihole(); err != nil {
-				log.Fatal(err)
+				log.Fatalln(err)
 			}
 		case "d":
 			if err := disablePihole(); err != nil {
-				log.Fatal(err)
+				log.Fatalln(err)
 			}
 		default:
 			fmt.Println(usage)
