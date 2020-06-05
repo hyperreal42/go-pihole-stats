@@ -99,15 +99,16 @@ type PiholeStats struct {
 // Returns byte array to be plugged into other functions
 func doRequest(url string, auth string) ([]byte, error) {
 	newURL := url + auth
+	if newURL == "/api.php?summary&auth=" {
+		err := errors.New("Pi-hole url or auth token not supplied")
+		return nil, err
+	}
+
 	req, err := http.NewRequest("GET", newURL, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "GET request failed")
 	}
 
-	if newURL == "/api.php?summary&auth=" {
-		err := errors.New("Pi-hole url or auth token not supplied")
-		return nil, err
-	}
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not get HTTP response")
